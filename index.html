@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Calendar</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <select id="yearSelect"></select>
+            <select id="monthSelect"></select>
+        </div>
+        <div id="calendar" class="calendar"></div>
+    </div>
+    
+    <div id="appointmentPopup" class="appointment-popup" style="display: none;">
+        <div class="popup-content">
+            <h4>Appointments for <span id="selectedDate"></span></h4>
+            <div id="appointmentsList"></div>
+            <button onclick="closePopup()">Close</button>
+            <button onclick="openAppointmentForm()">Add Appointment</button>
+        </div>
+    </div>
+
+    <div id="appointmentFormPopup" class="appointment-popup" style="display: none;">
+        <div class="popup-content">
+            <h4>Add Appointment for <span id="formSelectedDate"></span></h4>
+            <form id="appointmentForm">
+                <label for="appointmentDetails">Appointment Details:</label>
+                <input type="text" id="appointmentDetails" required>
+                <button type="button" onclick="saveAppointment()">Save</button>
+                <button type="button" onclick="closeFormPopup()">Cancel</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const yearSelect = document.getElementById("yearSelect");
+            const monthSelect = document.getElementById("monthSelect");
+            const calendar = document.getElementById("calendar");
+            const appointmentPopup = document.getElementById("appointmentPopup");
+            const appointmentFormPopup = document.getElementById("appointmentFormPopup");
+            const selectedDateSpan = document.getElementById("selectedDate");
+            const formSelectedDateSpan = document.getElementById("formSelectedDate");
+            const appointmentsList = document.getElementById("appointmentsList");
+            const appointmentDetailsInput = document.getElementById("appointmentDetails");
+            
+            let appointments = {}; // Store appointments
+            
+            function generateCalendar(year, month) {
+                calendar.innerHTML = "";
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                
+                for (let i = 0; i < firstDay; i++) {
+                    const emptyDiv = document.createElement("div");
+                    emptyDiv.classList.add("empty");
+                    calendar.appendChild(emptyDiv);
+                }
+                
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dayDiv = document.createElement("div");
+                    dayDiv.classList.add("day");
+                    dayDiv.innerText = day;
+                    
+                    const dateKey = `${year}-${month + 1}-${day}`;
+                    if (appointments[dateKey] && appointments[dateKey].length > 0) {
+                        const dot = document.createElement("span");
+                        dot.classList.add("dot");
+                        dayDiv.appendChild(dot);
+                        
+                        dayDiv.setAttribute("title", `${appointments[dateKey].length} appointments`);
+                    }
+                    
+                    dayDiv.addEventListener("click", function () {
+                        showAppointments(dateKey);
+                    });
+                    
+                    calendar.appendChild(dayDiv);
+                }
+            }
+            
+            function populateDropdowns() {
+                const currentYear = new Date().getFullYear();
+                for (let i = currentYear - 10; i <= currentYear + 10; i++) {
+                    let option = new Option(i, i);
+                    yearSelect.appendChild(option);
+                }
+                
+                ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].forEach((month, index) => {
+                    let option = new Option(month, index);
+                    monthSelect.appendChild(option);
+                });
+                
+                yearSelect.value = new Date().getFullYear();
+                monthSelect.value = new Date().getMonth();
+            }
+            
+            function showAppointments(dateKey) {
+                selectedDateSpan.innerText = dateKey;
+                appointmentsList.innerHTML = "";
+                
+                if (appointments[dateKey] && appointments[dateKey].length > 0) {
+                    appointments[dateKey].forEach(appointment => {
+                        const item = document.createElement("div");
+                        item.innerText = appointment;
+                        appointmentsList.appendChild(item);
+                    });
+                } else {
+                    appointmentsList.innerHTML = "No appointments.";
+                }
+                
+                appointmentPopup.style.display = "block";
+            }
+            
+            function openAppointmentForm() {
+                formSelectedDateSpan.innerText = selectedDateSpan.innerText;
+                appointmentFormPopup.style.display = "block";
+            }
+            
+            function closePopup() {
+                appointmentPopup.style.display = "none";
+            }
+            
+            function closeFormPopup() {
+                appointmentFormPopup.style.display = "none";
+            }
+            
+            function saveAppointment() {
+                const dateKey = formSelectedDateSpan.innerText;
+                const newAppointment = appointmentDetailsInput.value;
+                if (newAppointment) {
+                    if (!appointments[dateKey]) {
+                        appointments[dateKey] = [];
+                    }
+                    appointments[dateKey].push(newAppointment);
+                    appointmentDetailsInput.value = "";
+                    closeFormPopup();
+                    generateCalendar(yearSelect.value, parseInt(monthSelect.value));
+                }
+            }
+            
+            yearSelect.addEventListener("change", () => generateCalendar(yearSelect.value, parseInt(monthSelect.value)));
+            monthSelect.addEventListener("change", () => generateCalendar(yearSelect.value, parseInt(monthSelect.value)));
+            
+            populateDropdowns();
+            generateCalendar(yearSelect.value, parseInt(monthSelect.value));
+        });
+    </script>
+</body>
+</html>
